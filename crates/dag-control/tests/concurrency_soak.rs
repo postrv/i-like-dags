@@ -16,7 +16,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use dag_control::test_utils::TestControl;
-use dag_control::{Control, GcRequest, SyncOptions};
+use dag_control::{Control, ControlError, GcRequest, SyncOptions};
 use dag_core::{Cid, ContentStore, CoreError, PinScope, PinTarget};
 
 /// How long the storm lasts. Long enough for thousands of operations per
@@ -240,6 +240,13 @@ fn everything_at_once_loses_nothing() {
                 match dag_control::sync::push(&control, &replica, &SyncOptions::default()) {
                     Ok(_) => {
                         syncs.fetch_add(1, Ordering::Relaxed);
+                    }
+                    Err(ControlError::Invalid(msg))
+                        if msg.contains("source event generation changed") =>
+                    {
+                        // Writers advanced the source while this snapshot
+                        // was walking it. Retry on the next loop; that is
+                        // the documented recovery, not a lost write.
                     }
                     Err(e) => fail(&failures, format!("sync: {e}")),
                 }

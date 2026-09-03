@@ -4907,11 +4907,15 @@ mod tests {
             .claim_next_pending("gone-worker", MIN_LEASE_SECONDS)
             .unwrap()
             .unwrap();
-        let manifest = InputManifest {
-            static_inputs: Vec::new(),
-            pointer_heads: Vec::new(),
-            resolved_at_unix: current_timestamp(),
-        };
+        // Enqueue already bound the immutable manifest; starting with a
+        // different one is ExecutionFailed, not the lease-expiry path.
+        let manifest = job_log
+            .get_job_runs(&job.job_id, None)
+            .unwrap()
+            .into_iter()
+            .next()
+            .expect("trigger filed a run")
+            .manifest;
         job_log
             .record_claimed_run_started(&claim, &manifest)
             .unwrap();
