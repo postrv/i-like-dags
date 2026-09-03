@@ -1,0 +1,17 @@
+# Standalone harness — not a workspace member. Build it from this directory
+# with `cargo build --release` after placing main.rs under src/.
+[package]
+name = "vdw33-exp"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+
+[dependencies]
+dag-core = { path = "../../../crates/dag-core" }
+dag-control = { path = "../../../crates/dag-control" }
+dag-jobs = { path = "../../../crates/dag-jobs", features = ["exec"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+serde_json = "1"
+ed25519-dalek = "3.0"
+hex = "0.4"

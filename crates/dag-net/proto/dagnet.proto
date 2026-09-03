@@ -1,0 +1,480 @@
+// The node protocol (ADR-005): what one dag node may ask of another.
+//
+// Everything here assumes an authenticated, encrypted channel — the server
+// refuses non-loopback plaintext by default and accepts scoped current plus
+// previous bearer credentials for rotation. Service scopes are read (Node),
+// sync (Sync), pointer (Pointers), and events (Events); trigger is a conditional
+// authority required when a pointer mutation would enqueue destination-local
+// work or a Sync Commit would advance an actively subscribed pointer, and
+// admin is an explicit wildcard. Deliberately absent are job/spec
+// management and direct execution (a trigger-authorized pointer update can
+// activate only a job configured locally by the destination operator), garbage
+// collection (deletion is a local operator decision), trust operations (a source
+// must not decide what its replica trusts), and migrate/reclaim/recovery (local
+// deployment state).
+//
+// CIDs travel as their 32 raw SHA-256 bytes. Anything else is refused with
+// INVALID_ARGUMENT — the same "CIDs are always 32 bytes" rule the rest of
+// the system enforces.
+
+syntax = "proto3";
+
+package dagnet.v1;
+
+// ---------------------------------------------------------------------------
+// Node: operational identity.
+
+service Node {
+  // Version, schema and store shape — the operational ping.
+  rpc Info(InfoRequest) returns (InfoResponse);
+}
+
+message InfoRequest {}
+
+message InfoResponse {
+  // Crate version of the serving binary.
+  string version = 1;
+  // On-disk schema version of the data directory being served.
+  uint32 schema_version = 2;
+  uint64 chunks = 3;
+  uint64 bytes = 4;
+  uint64 pointers = 5;
+  uint64 pins = 6;
+  bool recovered = 7;
+  // Node-protocol compatibility is independent of the crate and storage
+  // schema versions. A major mismatch is incompatible; minor additions are
+  // backwards compatible when the named capability is present.
+  uint32 protocol_major = 8;
+  uint32 protocol_minor = 9;
+  repeated string capabilities = 10;
+}
+
+// ---------------------------------------------------------------------------
+// Sync: the ADR-002 replication engine over a network. The server plays the
+// source role for a pull (Enumerate/StatChunks/GetChunk) and the destination
+// role for a push (Missing/PutChunk/BeginEventImport/StageEventImport/
+// CommitEventImport). Publication validation always runs in the destination
+// process — this contract carries offers, never authority.
+
+service Sync {
+  // Authenticated compatibility negotiation for sync-only credentials. The
+  // same fields are also exposed by Node.Info for operators.
+  rpc Negotiate(ProtocolHello) returns (ProtocolWelcome);
+
+  // Source role: everything this node offers, streamed in bounded batches.
+  rpc Enumerate(EnumerateRequest) returns (stream EnumerateBatch);
+
+  // Stable, bounded event-history pagination. The first request leaves
+  // generation empty; every continuation sends back the returned generation.
+  // A source mutation aborts the page rather than mixing generations.
+  rpc PageEvents(EventPageRequest) returns (EventPageResponse);
+
+  // Destination role: which of these CIDs this node lacks. At most
+  // 16 CIDs per call. Each purported hit is read and hash-verified, bounding
+  // one call to 64 MiB of integrity work at the chunk-size ceiling.
+  rpc Missing(MissingRequest) returns (MissingResponse);
+
+  // Source role: verified chunk sizes — what a dry run reports. Integrity is
+  // checked by reading/hash-verifying each chunk, so at most 16 CIDs are
+  // accepted per call. Absent/unreadable chunks are omitted from the answer.
+  rpc StatChunks(StatChunksRequest) returns (StatChunksResponse);
+
+  // Source role: one chunk's bytes, framed. The first frame carries the CID
+  // and total length; every frame carries data. The receiver re-hashes.
+  rpc GetChunk(GetChunkRequest) returns (stream ChunkFrame);
+
+  // Destination role: store one chunk, framed as in GetChunk. The server
+  // re-hashes what actually arrived, refuses a mismatch, and enforces both a
+  // per-frame idle deadline and an overall upload deadline.
+  rpc PutChunk(stream ChunkFrame) returns (PutChunkResponse);
+
+  // Destination role: make every chunk stored so far durable. The client
+  // calls this once, after the last PutChunk and before event publication —
+  // the server also settles internally during CommitEventImport, so a client
+  // that skips it cannot file events over unflushed bytes.
+  rpc Flush(FlushRequest) returns (FlushResponse);
+
+  // Destination role, read-only: identify event positions already occupied by
+  // a different CID. Dry-run uses these bounded probes instead of importing.
+  rpc ProbePointerEvents(ProbeEventsRequest) returns (ProbeEventsResponse);
+  rpc ProbePinEvents(ProbeEventsRequest) returns (ProbeEventsResponse);
+
+  // Removed in protocol 3 because this shape cannot bind signature/effect
+  // candidates to the publication digest. Retained only so an old generated
+  // client receives an immediate FailedPrecondition instead of an unknown RPC.
+  rpc ImportEventBatch(stream ImportEventBatchRequest) returns (ImportEventBatchResponse);
+
+  // Removed candidate-blind protocol-v1 calls. Protocol-3 servers fail them
+  // before reading or staging the request.
+  rpc ImportPointerEvent(ImportEventRequest) returns (ImportEventResponse) {
+    option deprecated = true;
+  }
+  rpc ImportPinEvent(ImportEventRequest) returns (ImportEventResponse) {
+    option deprecated = true;
+  }
+
+  // Protocol-v3 destination staging. Pages are invisible and idempotent by
+  // (session_id, page_index). Commit validates the complete offer and publishes
+  // event mappings plus the affected derived-index merges in one transaction.
+  rpc BeginEventImport(BeginEventImportRequest) returns (BeginEventImportResponse);
+  rpc StageEventImport(StageEventImportRequest) returns (StageEventImportResponse);
+  rpc CommitEventImport(CommitEventImportRequest) returns (CommitEventImportResponse);
+  rpc EventImportStatus(EventImportStatusRequest) returns (EventImportStatusResponse);
+  rpc AbortEventImport(AbortEventImportRequest) returns (AbortEventImportResponse);
+
+  // Removed in protocol 3. CommitEventImport is the sole publication marker.
+  rpc Finalize(FinalizeRequest) returns (FinalizeResponse);
+}
+
+message ProtocolHello {
+  uint32 protocol_major = 1;
+  uint32 protocol_minor = 2;
+  repeated string required_capabilities = 3;
+}
+
+message ProtocolWelcome {
+  uint32 protocol_major = 1;
+  uint32 protocol_minor = 2;
+  repeated string capabilities = 3;
+}
+
+message EnumerateRequest {
+  // Cap on the server's content walk. 0 means the server's default.
+  uint64 max_walk = 1;
+  // Identity whose local-scoped pins apply on the source. Empty means
+  // `local`, matching the local CLI/GC compatibility default.
+  string source_node_id = 2;
+  // The caller understands the mandatory terminal completeness marker. A
+  // server refuses a truncated result to an older caller that leaves this
+  // false, preventing that caller from silently publishing a partial walk.
+  bool require_completeness_marker = 3;
+  // When non-empty, the source must still be at this event generation before
+  // and after enumeration. Protocol-v3 clients obtain it from PageEvents.
+  string snapshot_generation = 4;
+  // Event refs travel through PageEvents in protocol v3.
+  bool omit_event_refs = 5;
+}
+
+message EventRef {
+  string id = 1;
+  uint64 seq = 2;
+  bytes event_cid = 3;
+}
+
+message EnumerateBatch {
+  repeated EventRef pointer_events = 1;
+  repeated EventRef pin_events = 2;
+  // Chunk CIDs in offer order; the client deduplicates.
+  repeated bytes wanted = 3;
+  // Complete CIDs required by live roots, event history and their signatures.
+  // An absent chunk in this set blocks destination head publication; one
+  // outside it is collected history, which is expected.
+  repeated bytes live_roots = 4;
+  // Exactly one terminal batch ends every successful enumeration, including
+  // an empty one. Requiring it makes truncation metadata fail closed across
+  // mixed or interrupted protocol streams.
+  bool terminal = 5;
+  bool truncated = 6;
+  uint64 walked = 7;
+  uint64 walk_limit = 8;
+  uint64 remaining_frontier = 9;
+  // Present only on the terminal marker when snapshot_generation was used.
+  string snapshot_generation = 10;
+  // Strict signature/effect-claim entries the destination must merge into
+  // derived lookup rows during the atomic publication marker.
+  repeated bytes index_candidates = 11;
+}
+
+message EventCursor {
+  string id = 1;
+  uint64 seq = 2;
+}
+
+message EventPageRequest {
+  // "pointer" or "pin".
+  string kind = 1;
+  // 0 selects the server default; the server caps this at 4096.
+  uint32 page_size = 2;
+  EventCursor after = 3;
+  // Empty starts a snapshot. Continuations must echo the returned value.
+  string snapshot_generation = 4;
+}
+
+message EventPageResponse {
+  repeated EventRef events = 1;
+  EventCursor next_after = 2;
+  bool complete = 3;
+  string snapshot_generation = 4;
+  // Signature/countersignature chunks covering this page's event entries.
+  // These are required evidence and are copied before publication.
+  repeated bytes related_cids = 5;
+  // Direct content targets recovered from readable, strictly matching
+  // pointer events in this page. They are wanted-only diagnostics: an absent
+  // superseded target is reported as collected source history and never
+  // blocks publication. Empty for pin pages.
+  repeated bytes historical_targets = 6;
+  // Raw stored pointer-event Entry bytes charged before target decoding.
+  // Clients aggregate this across pages against their fixed sync budget.
+  uint64 pointer_event_bytes_read = 7;
+}
+
+message MissingRequest {
+  repeated bytes cids = 1;
+}
+
+message MissingResponse {
+  repeated bytes missing = 1;
+}
+
+message StatChunksRequest {
+  // At most 16 CIDs because each stat performs full integrity verification.
+  repeated bytes cids = 1;
+}
+
+message StatChunksResponse {
+  message Stat {
+    bytes cid = 1;
+    uint64 len = 2;
+  }
+  repeated Stat stats = 1;
+}
+
+message GetChunkRequest {
+  bytes cid = 1;
+}
+
+message ChunkFrame {
+  // Set on the first frame of a chunk; empty afterwards.
+  bytes cid = 1;
+  // Total chunk length, set on the first frame. Lets the receiver refuse an
+  // over-long stream before buffering it all.
+  uint64 total_len = 2;
+  bytes data = 3;
+}
+
+message PutChunkResponse {
+  uint64 stored_len = 1;
+}
+
+message ImportEventBatchRequest {
+  // At most 4096 refs in one frame. The server also caps the complete stream.
+  repeated EventRef pointer_events = 1;
+  repeated EventRef pin_events = 2;
+  // Exactly one empty terminal frame completes the offer. EOF without it is
+  // an interrupted upload and publishes nothing.
+  bool terminal = 3;
+}
+
+message ImportEventBatchResponse {
+  uint64 pointer_events = 1;
+  uint64 pin_events = 2;
+  EventBatchRejection rejection = 3;
+}
+
+message ImportEventRequest {
+  string id = 1;
+  uint64 seq = 2;
+  bytes event_cid = 3;
+}
+
+message ImportEventResponse {
+  // Retained only for the removed unary import method's wire compatibility.
+  bool imported = 1;
+}
+
+message BeginEventImportRequest {
+  // A client-generated 128-bit lowercase hexadecimal ID. The shipped client
+  // derives it from the complete offer digest; repeating Begin with the same
+  // ID resumes the same live session.
+  string transfer_id = 1;
+}
+
+message BeginEventImportResponse {
+  string session_id = 1;
+  uint64 next_page_index = 2;
+  int64 expires_unix = 3;
+}
+
+message StageEventImportRequest {
+  string session_id = 1;
+  uint64 page_index = 2;
+  repeated EventRef pointer_events = 3;
+  repeated EventRef pin_events = 4;
+}
+
+message StageEventImportResponse {
+  uint64 next_page_index = 1;
+  uint64 pointer_events_staged = 2;
+  uint64 pin_events_staged = 3;
+  int64 expires_unix = 4;
+}
+
+message CommitEventImportRequest {
+  string session_id = 1;
+  uint64 expected_pages = 2;
+  uint64 expected_pointer_events = 3;
+  uint64 expected_pin_events = 4;
+  // SHA-256 over the canonical ordered event-ref encoding.
+  bytes offer_digest = 5;
+  // Strict signature/effect-claim candidates discovered by the source's
+  // bounded walk. At most 65,536 canonical 32-byte CIDs. The destination
+  // re-reads and classifies every entry before atomic publication.
+  repeated bytes index_candidates = 6;
+  // Required even for an empty candidate list. This makes a protocol-v2
+  // generated client fail closed if it bypasses Negotiate and calls Commit
+  // directly instead of silently publishing a candidate-blind snapshot.
+  string publication_capability = 7;
+}
+
+message CommitEventImportResponse {
+  uint64 pointer_events = 1;
+  uint64 pin_events = 2;
+  EventBatchRejection rejection = 3;
+  uint32 pointers_rebuilt = 4;
+  uint32 pins_rebuilt = 5;
+  uint32 signatures_indexed = 6;
+  uint32 claims_indexed = 7;
+}
+
+message EventImportStatusRequest {
+  string session_id = 1;
+}
+
+message EventImportStatusResponse {
+  // "active", "committing", "committed", or terminal "rejected".
+  string state = 1;
+  uint64 next_page_index = 2;
+  uint64 pointer_events_staged = 3;
+  uint64 pin_events_staged = 4;
+  int64 expires_unix = 5;
+  CommitEventImportResponse result = 6;
+}
+
+message AbortEventImportRequest {
+  string session_id = 1;
+}
+
+message AbortEventImportResponse {
+  // False means the session was already absent or expired. Abort is
+  // deliberately idempotent.
+  bool aborted = 1;
+}
+
+message EventBatchRejection {
+  string kind = 1;
+  EventRef event = 2;
+  string reason = 3;
+  bool divergent = 4;
+}
+
+message ProbeEventsRequest {
+  // At most 4096 events per request (metadata-only, unlike Missing).
+  repeated EventRef events = 1;
+}
+
+message EventConflict {
+  EventRef offered = 1;
+  bytes existing_cid = 2;
+}
+
+message ProbeEventsResponse {
+  repeated EventConflict conflicts = 1;
+}
+
+message FlushRequest {}
+
+message FlushResponse {
+  // How many chunks the flush settled.
+  uint64 flushed = 1;
+}
+
+message FinalizeRequest {}
+
+message FinalizeResponse {
+  uint32 pointers_rebuilt = 1;
+  uint32 pins_rebuilt = 2;
+  uint32 signatures_indexed = 3;
+  uint32 claims_indexed = 4;
+}
+
+// ---------------------------------------------------------------------------
+// Pointers: reads for replicas and clients, and the one remote write the
+// protocol allows — a compare-and-set update serialized by the primary.
+
+service Pointers {
+  rpc Resolve(ResolveRequest) returns (ResolveResponse);
+  rpc List(ListPointersRequest) returns (ListPointersResponse);
+
+  // Compare-and-set: `expect_seq` is the head sequence the caller believes
+  // is current, and 0 means create. A stale expectation is refused with
+  // FAILED_PRECONDITION naming the actual head, so the caller re-reads and
+  // retries. Two concurrent writers cannot lose an update — one wins, one
+  // is told exactly why it did not (ADR-005 decision 3).
+  rpc Update(UpdatePointerRequest) returns (UpdatePointerResponse);
+}
+
+message ResolveRequest {
+  string id = 1;
+}
+
+message ResolveResponse {
+  bytes cid = 1;
+  uint64 seq = 2;
+}
+
+message ListPointersRequest {
+  // Maximum IDs in this page. 0 selects the server default; values above the
+  // server ceiling are refused instead of allocating an unbounded response.
+  uint32 page_size = 1;
+  // Return IDs lexicographically after this one. Empty starts at the first.
+  string after_id = 2;
+}
+
+message ListPointersResponse {
+  repeated string ids = 1;
+  // Last delivered ID when another page exists; empty means complete.
+  string next_after_id = 2;
+}
+
+message UpdatePointerRequest {
+  string id = 1;
+  bytes new_cid = 2;
+  uint64 expect_seq = 3;
+}
+
+message UpdatePointerResponse {
+  uint64 seq = 1;
+}
+
+// ---------------------------------------------------------------------------
+// Events: the observability stream, remotely.
+
+service Events {
+  // Optionally replay the journal from `since_seq`, then follow live. The
+  // event payload is the same JSON the local `dag events tail` emits — one
+  // schema for both surfaces, not two to keep in sync.
+  rpc Subscribe(SubscribeRequest) returns (stream EventEnvelope);
+}
+
+message SubscribeRequest {
+  // Replay journal history at or after `since_seq` before going live.
+  bool replay = 1;
+  uint64 since_seq = 2;
+  // Event type filters: pointer, pin, job, storage. Empty means all.
+  repeated string types = 3;
+  // End the stream once replay is exhausted instead of following live.
+  bool no_follow = 4;
+  // Replay at most this many events, counting back from the newest — the
+  // same rule as the local tail's --limit. 0 selects the server's safe cap;
+  // the server currently accepts at most 500 per replay. If that implicit
+  // cap omits older matches, the stream ends with OUT_OF_RANGE rather than a
+  // clean EOF that could be mistaken for complete history.
+  uint64 limit = 5;
+}
+
+message EventEnvelope {
+  uint64 seq = 1;
+  int64 ts = 2;
+  // The event serialized as JSON, exactly as the local tail prints it.
+  string json = 3;
+}

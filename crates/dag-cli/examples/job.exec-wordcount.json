@@ -1,0 +1,37 @@
+{
+  "job_id": "wordcount",
+  "placement": "local",
+  "inputs": {
+    "static_inputs": [],
+    "pointer_inputs": [
+      "datasets/customer-transactions"
+    ]
+  },
+  "determinism": "SideEffecting",
+  "declared_outputs": [
+    "report",
+    "stdout"
+  ],
+  "code_ref": "exec",
+  "policy": {
+    "cache_outputs": {
+      "Pin": {
+        "ttl": null
+      }
+    },
+    "trigger": "Manual"
+  },
+  "config": {
+    "command": "sh",
+    "args": [
+      "-c",
+      "wc -lwc < 'inputs/datasets~customer-transactions' | tee outputs/report.txt"
+    ],
+    "env": {},
+    "outputs": {
+      "report": "outputs/report.txt"
+    },
+    "capture_stdout": true,
+    "timeout_secs": 60
+  }
+}

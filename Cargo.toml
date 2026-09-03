@@ -1,0 +1,104 @@
+[workspace]
+members = [
+    "crates/dag-core",
+    "crates/dag-storage",
+    "crates/dag-control",
+    "crates/dag-jobs",
+    "crates/dag-api",
+    "crates/dag-net",
+    "crates/dag-cli",
+    "crates/dag-wasm",
+    "crates/dag-edge",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Laurence Avent"]
+license = "Apache-2.0"
+repository = "https://github.com/postrv/i-like-dags"
+homepage = "https://github.com/postrv/i-like-dags"
+readme = "README.md"
+# Floor imposed by redb 4.1, the control-plane storage engine (ADR-001);
+# verified by building the workspace with that toolchain, not inferred.
+rust-version = "1.89"
+keywords = ["content-addressed", "dag", "cid", "provenance", "storage"]
+categories = ["database-implementations", "data-structures"]
+
+# Release builds must not disagree with test builds about arithmetic.
+#
+# Without this, `overflow-checks` is off in release, and the pin-TTL defect was
+# exactly what that costs: `now_unix() + ttl` panicked loudly under `cargo
+# test` and wrapped silently under `cargo build --release`, so the API returned
+# 200 for a pin that protected nothing. Any bug the test suite can only find in
+# debug is a bug shipped. A branch per integer operation is not measurable
+# against this workspace's actual cost centres — SHA-256 over chunk bytes and
+# redb transactions — and silent wrapping in retention, size and offset
+# arithmetic is not a trade worth taking.
+[profile.release]
+overflow-checks = true
+# Left off deliberately. `debug_assert!` is for development-time invariant
+# checks; anything load-bearing here (CID length, chunk size, manifest depth)
+# is a real check that runs in every profile, and turning these on would imply
+# otherwise.
+debug-assertions = false
+# The default, stated because it is a decision. A panicking handler under
+# axum/tower kills that one connection task and the server keeps serving every
+# other request; `panic = "abort"` would take the whole process — and everyone
+# else's in-flight work — down with one bad request, on a server that has no
+# supervisor to restart it.
+panic = "unwind"
+
+[workspace.dependencies]
+# Internal crates. Versions are required for publication: a bare `path`
+# dependency cannot be resolved by anyone downloading from crates.io.
+dag-core = { version = "0.1.0", path = "crates/dag-core" }
+dag-storage = { version = "0.1.0", path = "crates/dag-storage" }
+dag-control = { version = "0.1.0", path = "crates/dag-control" }
+dag-jobs = { version = "0.1.0", path = "crates/dag-jobs" }
+dag-api = { version = "0.1.0", path = "crates/dag-api" }
+dag-net = { version = "0.1.0", path = "crates/dag-net" }
+dag-wasm = { version = "0.1.0", path = "crates/dag-wasm" }
+dag-edge = { version = "0.1.0", path = "crates/dag-edge" }
+
+anyhow = "1.0"
+thiserror = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+ciborium = "0.2"
+bytes = "1.0"
+sha2 = "0.10"
+hex = "0.4"
+# Control-plane storage engine. See docs/decisions/adr-001-storage-engine.md.
+redb = "4.1"
+# Content-defined chunking for files larger than one chunk.
+fastcdc = "4.0"
+# Signing layer: Ed25519 over DSSE envelopes (ADR-002 candidate).
+ed25519-dalek = "3.0"
+base64 = "0.22"
+getrandom = "0.3"
+# Retained ONLY so the operator-invoked `dag migrate` path can read pre-redb
+# data directories. `deny.toml` prevents any crate except dag-cli from wrapping
+# it and records the two unmaintained transitive exceptions.
+sled = "0.34"
+tokio = { version = "1.0", features = ["full"] }
+# Node protocol (ADR-005). The `.proto` is compiled by protox — a pure-Rust
+# protobuf compiler — so `cargo build` needs no `protoc` binary. TLS is
+# rustls over ring; native roots let a grpcs:// client trust a publicly
+# issued certificate without hand-carrying a CA file.
+tonic = { version = "0.14", features = ["tls-ring", "tls-native-roots"] }
+tonic-prost = "0.14"
+prost = "0.14"
+tokio-stream = "0.1"
+tonic-prost-build = "0.14"
+protox = "0.9"
+clap = { version = "4.0", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+tempfile = "3.0"
+# Sync HTTP client for `HttpDestination` (ADR-007). The engine is
+# synchronous; ureq matches that, and rustls is the same TLS story as
+# the gRPC node client.
+ureq = { version = "2.12", features = ["json"] }
+url = "2.5"

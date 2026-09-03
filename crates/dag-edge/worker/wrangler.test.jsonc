@@ -1,0 +1,43 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "dag-edge-test",
+  "main": "src/index.ts",
+  // Local workerd test harness only. This declares no public hostname, preview
+  // URL, route, or trigger. A mistaken deployment also lacks the harness-only
+  // binding injected by Vitest, so every attempt to open its R2 store fails
+  // closed; do not attach this Worker through a service binding.
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [],
+  // The workerd build bundled by @cloudflare/vitest-pool-workers 0.22.0
+  // currently supports dates through 2026-08-22. Production remains on today.
+  "compatibility_date": "2026-08-22",
+  "vars": {
+    "DAG_EDGE_MODE": "test",
+    "DAG_RETAINED_BYTES_LIMIT": "5242880",
+    "DAG_RETAINED_OBJECTS_LIMIT": "1000"
+  },
+  "assets": {
+    "directory": "public",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "none",
+    "not_found_handling": "none"
+  },
+  "r2_buckets": [
+    { "binding": "CHUNKS", "bucket_name": "dag-edge-test-chunks" }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "POINTERS", "class_name": "PointerObject" },
+      { "name": "PINS", "class_name": "PinObject" },
+      { "name": "CATALOG", "class_name": "CatalogObject" }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["PointerObject", "PinObject", "CatalogObject"]
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+[package]
+name = "dag-control"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+description = "Control plane for content-addressed storage: mutable pointers with history, pins, retention, jobs, signatures and events."
+categories = ["database-implementations", "data-structures"]
+keywords = ["content-addressed", "provenance", "pointers", "retention"]
+
+[dependencies]
+dag-core = { workspace = true }
+dag-storage = { workspace = true }
+redb = { workspace = true }
+ed25519-dalek = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+ciborium = { workspace = true }
+hex = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+parking_lot = "0.12"
+chrono = { version = "0.4", features = ["serde"] }
+ureq = { workspace = true }
+url = { workspace = true }
+getrandom = { workspace = true }
+
+[features]
+# Exposes TestControl for integration tests.
+#
+# `anyhow` is pulled in only here: the library API is anyhow-free so callers can
+# match on `ControlError`, but the test harness reports harness failures
+# (timeouts, a closed bus) where a typed error would buy nothing.
+test-utils = ["tempfile", "anyhow"]
+
+[dev-dependencies]
+tempfile = { workspace = true }
+serde_json = { workspace = true }
+serial_test = "3.4"
+# Lets tests assemble a raw DSSE signature by hand, which is how the
+# small-order forgery is expressed.
+base64 = { workspace = true }
+# Lets tests age a chunk on disk. Two of the review's critical defects were
+# only reachable past a wall-clock threshold, and nothing in the suite could
+# reach one.
+filetime = "0.2"
+# Enable test-utils feature for integration tests (tests/ directory)
+dag-control = { version = "0.1.0", path = ".", features = ["test-utils"] }
+
+[dependencies.tempfile]
+workspace = true
+optional = true
+
+[dependencies.anyhow]
+workspace = true
+optional = true

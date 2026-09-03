@@ -1,0 +1,25 @@
+{
+  "name": "dag-edge-worker",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "test": "npm run test:unit && npm run test:runtime",
+    "test:unit": "node --experimental-strip-types --test test/*.test.ts",
+    "test:runtime": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "types:generate": "wrangler types ../worker-configuration.d.ts -c ../wrangler.r2.jsonc --include-runtime false",
+    "types:check": "wrangler types ../worker-configuration.d.ts -c ../wrangler.r2.jsonc --include-runtime false --check",
+    "check:deploy": "wrangler deploy --dry-run -c ../wrangler.r2.jsonc"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "0.22.0",
+    "@cloudflare/workers-types": "5.20260823.1",
+    "@types/node": "26.2.0",
+    "typescript": "7.0.2",
+    "vitest": "4.1.11",
+    "wrangler": "4.125.0"
+  }
+}

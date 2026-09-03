@@ -1,0 +1,81 @@
+# Dependency policy enforced by `cargo deny check --locked` in CI.
+#
+# Keep this file reviewable: a new source, license, advisory exception, or
+# banned dependency wrapper should require an explicit change here as well as
+# a Cargo.lock change.
+
+[graph]
+# CI builds every feature, including the deny-by-default exec adapter.  Audit
+# the same graph rather than only the default feature set.
+all-features = true
+
+[advisories]
+ignore = [
+    # Both warnings are transitive to sled 0.34.7, which is linked only into
+    # the `dag` CLI so an operator can run the explicit, offline `dag migrate`
+    # command against pre-redb directories. Neither crate is used by the redb
+    # control plane, server request paths, or edge runtime. Remove both
+    # exceptions with sled at the end of the documented migration window.
+    { id = "RUSTSEC-2025-0057", reason = "fxhash is unmaintained; present only through the read-side legacy sled migrator" },
+    { id = "RUSTSEC-2024-0384", reason = "instant is unmaintained; present only through the read-side legacy sled migrator" },
+]
+
+[licenses]
+# Permissive licenses currently present in the complete workspace graph.
+# CDLA-Permissive-2.0 covers only Mozilla's packaged WebPKI root data. Strong
+# copyleft licenses are intentionally not accepted globally; alternatives such
+# as `MIT OR LGPL-2.1-or-later` satisfy this policy through MIT.
+allow = [
+    "0BSD",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-3-Clause",
+    "BSL-1.0",
+    "CDLA-Permissive-2.0",
+    "ISC",
+    "MIT",
+    "Unicode-3.0",
+    "Unlicense",
+    "Zlib",
+]
+confidence-threshold = 0.93
+
+[licenses.private]
+# Workspace crates are release artifacts, so check their declarations too.
+ignore = false
+
+[bans]
+# Multiple versions are reported for maintainers to converge, but are not an
+# automatic release failure: platform support crates and semver-major crypto
+# transitions commonly require temporary duplication. Wildcard requirements
+# are never acceptable in a locked production graph.
+multiple-versions = "warn"
+wildcards = "deny"
+highlight = "simplest-path"
+workspace-default-features = "allow"
+external-default-features = "allow"
+allow-workspace = true
+
+deny = [
+    # TLS is deliberately rustls-only. These bans prevent a transitive change
+    # from silently adding a platform OpenSSL/native-tls runtime dependency.
+    { crate = "native-tls", reason = "TLS is standardized on rustls for reproducible, cross-platform builds" },
+    { crate = "openssl", reason = "TLS is standardized on rustls; do not add a second TLS implementation" },
+    { crate = "openssl-sys", reason = "TLS is standardized on rustls; native OpenSSL linkage is not permitted" },
+
+    # sled is otherwise banned across the workspace. The wrapper exception
+    # permits exactly the direct dag-cli dependency that implements the
+    # operator-invoked legacy migration command.
+    { crate = "sled", wrappers = ["dag-cli"], reason = "temporary read-side compatibility for `dag migrate`; remove after the migration window" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
+
+[sources.allow-org]
+github = []
+gitlab = []
+bitbucket = []

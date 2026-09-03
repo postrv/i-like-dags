@@ -1,0 +1,45 @@
+[package]
+name = "dag-api"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+description = "HTTP API, server-sent event stream and embedded web console for the i-like-dags content-addressed store."
+categories = ["web-programming::http-server", "database-implementations"]
+keywords = ["content-addressed", "http", "api", "sse", "provenance"]
+
+[dependencies]
+dag-core = { workspace = true }
+dag-storage = { workspace = true }
+dag-control = { workspace = true }
+dag-jobs = { workspace = true }
+axum = { version = "0.8", features = ["macros"] }
+http-body = "1"
+tower-http = { version = "0.6", features = ["cors", "limit", "timeout", "trace"] }
+tokio = { workspace = true }
+tokio-stream = { version = "0.1", features = ["sync"] }
+# StreamReader + SyncIoBridge: the async↔sync seam for streaming file I/O.
+tokio-util = { version = "0.7", features = ["io", "io-util"] }
+bytes = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+url = { workspace = true }
+
+[dev-dependencies]
+dag-control = { workspace = true, features = ["test-utils"] }
+tempfile = { workspace = true }
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"
+ed25519-dalek = { workspace = true }
+hex = { workspace = true }
+# With the exec feature ON, so the "API cannot reach exec" test runs under
+# the conditions cargo feature unification actually produces.
+dag-jobs = { workspace = true, features = ["exec"] }
+dag-edge = { workspace = true, features = ["test-harness"] }

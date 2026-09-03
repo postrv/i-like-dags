@@ -1,0 +1,43 @@
+[package]
+name = "dag-jobs"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+description = "Job adapters, runner and first-run effect cache for the i-like-dags content-addressed store."
+categories = ["database-implementations", "caching"]
+keywords = ["content-addressed", "jobs", "provenance", "cache"]
+
+[dependencies]
+dag-core = { workspace = true }
+dag-control = { workspace = true }
+dag-storage = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+sha2 = { workspace = true }
+parking_lot = "0.12"
+async-trait = "0.1"
+# Working directories for the exec adapter (also a dev-dep for tests).
+tempfile = { workspace = true }
+
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "1.1", features = ["process"], optional = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+# For generating builder keys in the attested-adoption tests (ADR-003).
+ed25519-dalek = { workspace = true }
+hex = { workspace = true }
+
+[features]
+default = []
+# Local command execution. OFF BY DEFAULT: see crates/dag-jobs/src/exec.rs
+# for the threat model. Never reachable from the HTTP API even when enabled.
+exec = ["tokio/process", "dep:rustix"]

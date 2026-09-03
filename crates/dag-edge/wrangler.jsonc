@@ -1,0 +1,68 @@
+{
+  "$schema": "./worker/node_modules/wrangler/config-schema.json",
+  // DEMO ONLY: temporary-account preview using eventually-consistent KV.
+  // Temporary Cloudflare accounts cannot provision R2. The Worker prefers
+  // the production R2 configuration in wrangler.r2.jsonc. This differently
+  // named Worker advertises production_ready=false and will refuse to use KV
+  // unless its explicit demo-kv mode is present.
+  "name": "dag-edge-kv-demo",
+  "main": "worker/src/index.ts",
+  "compatibility_date": "2026-08-23",
+  "workers_dev": true,
+  "preview_urls": false,
+  // Demo-only retained-storage fail-stops; KV remains eventually consistent.
+  "vars": {
+    "DAG_EDGE_MODE": "demo-kv",
+    "DAG_RETAINED_BYTES_LIMIT": "268435456",
+    "DAG_RETAINED_OBJECTS_LIMIT": "10000"
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 0.1,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.01
+    }
+  },
+  "assets": {
+    "directory": "worker/public",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "none",
+    "not_found_handling": "none"
+  },
+  "kv_namespaces": [
+    { "binding": "CHUNKS_KV" }
+  ],
+  // Approximate per-location guardrails for the public demo. Account-level
+  // budgets and WAF rules remain mandatory before treating any mode as ready.
+  "ratelimits": [
+    {
+      "name": "INGEST_RATE_LIMITER",
+      "namespace_id": "42001",
+      "simple": { "limit": 300, "period": 60 }
+    },
+    {
+      "name": "PUBLIC_READ_RATE_LIMITER",
+      "namespace_id": "42002",
+      "simple": { "limit": 300, "period": 60 }
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "POINTERS", "class_name": "PointerObject" },
+      { "name": "PINS", "class_name": "PinObject" },
+      { "name": "CATALOG", "class_name": "CatalogObject" }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["PointerObject", "PinObject", "CatalogObject"]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+[package]
+name = "dag-storage"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+description = "Filesystem chunk store with a redb index, integrity scanning and pin-aware garbage collection for content-addressed data."
+categories = ["database-implementations", "filesystem"]
+keywords = ["content-addressed", "storage", "cas", "gc", "redb"]
+
+[dependencies]
+dag-core = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+redb = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+bytes = { workspace = true }
+ciborium = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }
+parking_lot = "0.12"
+tempfile = "3.0"
+# Descriptor-relative filesystem operations keep a hostile shard symlink from
+# redirecting chunk reads, publication, or garbage collection outside data/.
+rustix = { version = "1.1", features = ["fs"] }

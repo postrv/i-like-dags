@@ -1,0 +1,64 @@
+[package]
+name = "dag-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+description = "`dag` — a single-binary content-addressed store with pointers, pins, jobs and verifiable provenance."
+categories = ["command-line-utilities", "database-implementations"]
+keywords = ["content-addressed", "dag", "cli", "provenance", "storage"]
+
+[[bin]]
+name = "dag"
+path = "src/main.rs"
+
+[dependencies]
+dag-core = { workspace = true }
+dag-storage = { workspace = true }
+dag-control = { workspace = true }
+dag-jobs = { workspace = true, features = ["exec"] }
+dag-api = { workspace = true }
+dag-net = { workspace = true }
+clap = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter", "json"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { version = "0.4", features = ["serde"] }
+redb = { workspace = true }
+ed25519-dalek = { workspace = true }
+getrandom = { workspace = true }
+hex = { workspace = true }
+sha2 = { workspace = true }
+# Read-side only: `dag migrate` converts pre-redb data directories. This is
+# the single remaining sled dependency in the workspace.
+sled = { workspace = true }
+
+# Backup traversal is rooted at an already-open directory descriptor on Unix.
+# `openat` plus `O_NOFOLLOW` closes the check/open race that path-based copies
+# otherwise have when a source entry is replaced by a symlink mid-backup.
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "1.1", features = ["fs", "process"] }
+
+[dev-dependencies]
+# test-utils exposes dag_control::test_utils::TestControl to integration tests
+dag-control = { workspace = true, features = ["test-utils"] }
+tempfile = { workspace = true }
+serial_test = "3.4"
+assert_cmd = "2.0"
+filetime = "0.2"
+predicates = "3.0"
+# Decodes the exported DSSE payload, which is how a test can assert the
+# envelope is what an external verifier would actually read.
+base64 = { workspace = true }
+serde_json = { workspace = true }
+# Lets a test hand-encode a pin event exactly as a pre-`prev` binary wrote it,
+# to prove such a directory still recovers (see tests/pin_prev_compat.rs).
+ciborium = { workspace = true }

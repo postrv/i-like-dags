@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; style-src 'unsafe-inline'; connect-src http: https:; base-uri 'none'; object-src 'none'">
+  <title>dag verify — local Rust verifier</title>
+  <style>
+    :root { color-scheme: light dark; --ok: #1b7f3a; --bad: #b42318; --muted: #667; }
+    body { font: 16px/1.45 system-ui, sans-serif; margin: 2rem auto; max-width: 48rem; padding: 0 1rem; }
+    h1 { font-size: 1.4rem; }
+    label { display: block; margin: .75rem 0 .25rem; color: var(--muted); font-size: .85rem; }
+    input { width: 100%; box-sizing: border-box; padding: .45rem .6rem; }
+    button { margin-top: .9rem; padding: .45rem .9rem; }
+    .score { font-size: 2rem; font-weight: 650; margin: 1rem 0 .4rem; }
+    .score.ok, .ok { color: var(--ok); }
+    .score.bad, .bad { color: var(--bad); }
+    li { margin: .25rem 0; }
+    code { font-size: .88em; }
+    .note { color: var(--muted); font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <h1>Verify a release with a local Rust kernel</h1>
+  <p>
+    This independently served bundle fetches content bytes, checks every CID,
+    and derives links locally with <code>dag-core</code>/WASM. It never asks the
+    content host for graph topology. Supply an out-of-band root CID when
+    pointer freshness or host equivocation is in scope.
+  </p>
+  <label for="base">Content plane base URL</label>
+  <input id="base" value="http://127.0.0.1:8081" spellcheck="false">
+  <label for="pointer">Pointer (used only when root CID is blank)</label>
+  <input id="pointer" value="models/fraud-detector/production" spellcheck="false">
+  <label for="root">Trusted root CID (optional, overrides pointer)</label>
+  <input id="root" inputmode="text" autocomplete="off" spellcheck="false">
+  <button id="run" type="button">Verify</button>
+  <p id="engine" class="note">Rust verifier loading…</p>
+  <div id="score" class="score" role="status" aria-live="polite" hidden></div>
+  <ul id="nodes"></ul>
+  <p id="err" class="bad" role="alert" hidden></p>
+  <p class="note">
+    Limits: 64 nodes, 16 MiB total bytes, depth 8, and 256 links. A limit is an
+    incomplete result, never a green success. Hash equality does not verify a
+    signature or establish when a mutable pointer was resolved.
+  </p>
+  <script type="module" src="./verify.js"></script>
+</body>
+</html>

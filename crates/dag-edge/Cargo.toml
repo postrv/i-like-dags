@@ -1,0 +1,38 @@
+[package]
+name = "dag-edge"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+description = "Non-production Rust models and test fixtures for the Cloudflare Edge Worker."
+categories = ["database-implementations", "web-programming::http-server"]
+keywords = ["content-addressed", "replica", "r2", "sync"]
+publish = false
+
+[features]
+default = []
+# Minimal native transport fixture used only by cross-crate tests. It is not
+# the Worker implementation and intentionally cannot be enabled accidentally
+# by a normal dependency on this crate.
+test-harness = []
+
+[dependencies]
+dag-core = { workspace = true }
+axum = { version = "0.8", features = ["macros"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+thiserror = { workspace = true }
+bytes = { workspace = true }
+ciborium = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"
+dag-core = { workspace = true }

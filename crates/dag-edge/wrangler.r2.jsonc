@@ -1,0 +1,77 @@
+{
+  "$schema": "./worker/node_modules/wrangler/config-schema.json",
+  // Permanent account: R2 objects keyed by CID hex + the same DO classes.
+  // From the repo root, on this branch:
+  //   wrangler r2 bucket create dag-chunks
+  //   wrangler secret put INGEST_TOKEN_CURRENT -c crates/dag-edge/wrangler.r2.jsonc
+  //   wrangler deploy -c crates/dag-edge/wrangler.r2.jsonc
+  // Rotate without downtime by setting INGEST_TOKEN_PREVIOUS to the old
+  // value, setting CURRENT to the new value, then deleting PREVIOUS after all
+  // clients have moved. DAG_NODE_TOKEN is accepted only as a deprecated alias.
+  "name": "dag-edge",
+  "main": "worker/src/index.ts",
+  "compatibility_date": "2026-08-23",
+  // Production must be attached to an explicitly managed custom domain or
+  // zone route; never expose an alternate *.workers.dev origin.
+  "workers_dev": false,
+  "preview_urls": false,
+  // Example logical fail-stops. Choose account-appropriate ceilings before
+  // deploy; an existing bucket must be inventoried into the Catalog ledger or
+  // replaced with an empty bucket before production cutover.
+  "vars": {
+    "DAG_EDGE_MODE": "production-r2",
+    "DAG_RETAINED_BYTES_LIMIT": "10737418240",
+    "DAG_RETAINED_OBJECTS_LIMIT": "100000"
+  },
+  "limits": {
+    "cpu_ms": 5000,
+    "subrequests": 5000
+  },
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.05
+    }
+  },
+  "assets": {
+    "directory": "worker/public",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "none",
+    "not_found_handling": "none"
+  },
+  "r2_buckets": [
+    { "binding": "CHUNKS", "bucket_name": "dag-chunks" }
+  ],
+  "ratelimits": [
+    {
+      "name": "INGEST_RATE_LIMITER",
+      "namespace_id": "41001",
+      "simple": { "limit": 1000, "period": 60 }
+    },
+    {
+      "name": "PUBLIC_READ_RATE_LIMITER",
+      "namespace_id": "41002",
+      "simple": { "limit": 600, "period": 60 }
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      { "name": "POINTERS", "class_name": "PointerObject" },
+      { "name": "PINS", "class_name": "PinObject" },
+      { "name": "CATALOG", "class_name": "CatalogObject" }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["PointerObject", "PinObject", "CatalogObject"]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "job_id": "concat-example",
+  "placement": null,
+  "inputs": {
+    "static_inputs": [],
+    "pointer_inputs": []
+  },
+  "determinism": "Deterministic",
+  "declared_outputs": [
+    "concatenated"
+  ],
+  "code_ref": "concat",
+  "policy": {
+    "cache_outputs": {
+      "Pin": {
+        "ttl": 3600
+      }
+    },
+    "trigger": "Manual"
+  }
+}

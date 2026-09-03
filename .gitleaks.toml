@@ -1,0 +1,20 @@
+[extend]
+path = ".gitleaks-history.toml"
+
+# A directory/no-git scan does not apply .gitignore. Suppress findings from
+# dependency caches, compiler output, local Cloudflare state, and editor/agent
+# state while continuing to scan every tracked or candidate source artifact.
+# Gitleaks 8.18.4 still reads allowlisted paths and uses the singular global
+# `allowlist` table. The extended file is the exact v8.18.4 default rule set
+# with its global allowlist removed, so this is the only global path allowlist.
+[allowlist]
+description = "non-release dependency, build, and local-tool state"
+paths = [
+  '''(^|[\\/])\.git[\\/]''',
+  '''(^|[\\/])target[\\/]''',
+  '''(^|[\\/])node_modules[\\/]''',
+  '''(^|[\\/])\.wrangler[\\/]''',
+  '''(^|[\\/])\.dag[\\/]''',
+  '''(^|[\\/])fuzz[\\/](target|corpus|artifacts)[\\/]''',
+  '''(^|[\\/])(\.agents|\.archive|\.claude|\.cowork|\.idea|\.ralph|\.vscode)[\\/]''',
+]

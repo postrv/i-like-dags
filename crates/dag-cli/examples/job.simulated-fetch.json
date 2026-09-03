@@ -1,0 +1,24 @@
+{
+  "job_id": "simulated-fetch-demo",
+  "_warning": "NOT A REAL FETCH. code_ref `fake_fetch` is a test double: it makes no network request and writes fixed bytes saying so. It is here to demonstrate first-run effect caching (J2) for side-effecting jobs. This system ships no HTTP fetcher; to fetch a URL, copy job.exec-wordcount.json and run curl through the `exec` adapter with --allow-exec.",
+  "placement": "local",
+  "inputs": {
+    "static_inputs": [],
+    "pointer_inputs": [
+      "demo-input"
+    ]
+  },
+  "determinism": "SideEffecting",
+  "declared_outputs": [
+    "artifact"
+  ],
+  "code_ref": "fake_fetch",
+  "policy": {
+    "cache_outputs": {
+      "Pin": {
+        "ttl": 604800
+      }
+    },
+    "trigger": "OnPointerUpdate"
+  }
+}

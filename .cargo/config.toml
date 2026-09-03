@@ -1,0 +1,4 @@
+# getrandom 0.3 on wasm32 needs an explicit backend cfg in addition to
+# the `wasm_js` cargo feature (see dag-core's `wasm` feature).
+[target.wasm32-unknown-unknown]
+rustflags = ['--cfg', 'getrandom_backend="wasm_js"']

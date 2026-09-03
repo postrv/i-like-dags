@@ -1,0 +1,15 @@
+{
+  "job_id": "hash-example",
+  "placement": "local",
+  "inputs": {
+    "static_inputs": [],
+    "pointer_inputs": []
+  },
+  "determinism": "Deterministic",
+  "declared_outputs": ["hash"],
+  "code_ref": "hash",
+  "policy": {
+    "cache_outputs": "None",
+    "trigger": "Manual"
+  }
+}

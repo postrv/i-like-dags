@@ -1,0 +1,90 @@
+[package]
+name = "dag-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+# Its own workspace root: the fuzz targets need nightly and a panic strategy
+# the main workspace does not use, and `cargo build` at the repo root must
+# not try to build them.
+[workspace]
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+dag-core = { path = "../crates/dag-core" }
+# `JobEvent` and `claim_from_bytes` live here. Both are reached by decoding
+# chunks — which anyone who can reach `POST /api/chunks` can write — so they
+# belong in the fuzz set even though the edge costs redb and tokio under
+# instrumentation.
+dag-control = { path = "../crates/dag-control" }
+# The encodings the targets drive directly: CBOR for entries and events,
+# JSON + base64 for DSSE envelopes.
+ciborium = "0.2"
+serde_json = "1.0"
+base64 = "0.22"
+# Only the seed-corpus generator needs these; the targets themselves take
+# bytes and nothing else.
+ed25519-dalek = "3.0"
+hex = "0.4"
+
+# An example, not a bin: `cargo fuzz build` passes `--bins`, which would
+# compile this with sanitizer-coverage flags but without libFuzzer's `main`,
+# and it fails to link. Run it with `cargo run --example seed_corpus`.
+[[example]]
+name = "seed_corpus"
+path = "seed_corpus.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "entry_cbor"
+path = "fuzz_targets/entry_cbor.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pointer_event"
+path = "fuzz_targets/pointer_event.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pin_event"
+path = "fuzz_targets/pin_event.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "dsse_envelope"
+path = "fuzz_targets/dsse_envelope.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "signature_record"
+path = "fuzz_targets/signature_record.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "job_event"
+path = "fuzz_targets/job_event.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "effect_claim"
+path = "fuzz_targets/effect_claim.rs"
+test = false
+doc = false
+bench = false

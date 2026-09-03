@@ -1,0 +1,40 @@
+[package]
+name = "dag-net"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+rust-version.workspace = true
+description = "Authenticated gRPC node protocol for the i-like-dags content-addressed store: replication, pointer updates, event streaming (ADR-005)."
+categories = ["network-programming", "database-implementations"]
+keywords = ["content-addressed", "grpc", "replication", "provenance", "sync"]
+
+[dependencies]
+dag-core = { workspace = true }
+dag-storage = { workspace = true }
+dag-control = { workspace = true }
+tonic = { workspace = true }
+tonic-prost = { workspace = true }
+prost = { workspace = true }
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+serde_json = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }
+
+[build-dependencies]
+tonic-prost-build = { workspace = true }
+protox = { workspace = true }
+
+[dev-dependencies]
+dag-control = { workspace = true, features = ["test-utils"] }
+tempfile = { workspace = true }
+ed25519-dalek = { workspace = true }
+hex = { workspace = true }
+# Self-signed certificates for the TLS tests.
+rcgen = "0.14"
