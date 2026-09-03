@@ -45,6 +45,58 @@ var DagWasm;
         return value;
     }
     /**
+     * Classify a chunk and strictly decode it when it is a native CBOR entry.
+     * @param {Uint8Array} bytes
+     * @returns {string}
+     */
+    __exports.inspect_chunk = function(bytes) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const ptr0 = passArray8ToWasm0(bytes, wasm.__wbindgen_malloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.inspect_chunk(ptr0, len0);
+            var ptr2 = ret[0];
+            var len2 = ret[1];
+            if (ret[3]) {
+                ptr2 = 0; len2 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred3_0 = ptr2;
+            deferred3_1 = len2;
+            return getStringFromWasm0(ptr2, len2);
+        } finally {
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
+    };
+
+    /**
+     * Decode a CBOR entry to JSON (CIDs as hex).
+     * @param {Uint8Array} bytes
+     * @returns {string}
+     */
+    __exports.decode_entry = function(bytes) {
+        let deferred3_0;
+        let deferred3_1;
+        try {
+            const ptr0 = passArray8ToWasm0(bytes, wasm.__wbindgen_malloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.decode_entry(ptr0, len0);
+            var ptr2 = ret[0];
+            var len2 = ret[1];
+            if (ret[3]) {
+                ptr2 = 0; len2 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred3_0 = ptr2;
+            deferred3_1 = len2;
+            return getStringFromWasm0(ptr2, len2);
+        } finally {
+            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
+    };
+
+    /**
      * Strictly decode a CBOR entry into a bounded browser inspection record.
      * @param {Uint8Array} bytes
      * @returns {string}
@@ -214,58 +266,6 @@ var DagWasm;
             return getStringFromWasm0(ret[0], ret[1]);
         } finally {
             wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
-        }
-    };
-
-    /**
-     * Classify a chunk and strictly decode it when it is a native CBOR entry.
-     * @param {Uint8Array} bytes
-     * @returns {string}
-     */
-    __exports.inspect_chunk = function(bytes) {
-        let deferred3_0;
-        let deferred3_1;
-        try {
-            const ptr0 = passArray8ToWasm0(bytes, wasm.__wbindgen_malloc);
-            const len0 = WASM_VECTOR_LEN;
-            const ret = wasm.inspect_chunk(ptr0, len0);
-            var ptr2 = ret[0];
-            var len2 = ret[1];
-            if (ret[3]) {
-                ptr2 = 0; len2 = 0;
-                throw takeFromExternrefTable0(ret[2]);
-            }
-            deferred3_0 = ptr2;
-            deferred3_1 = len2;
-            return getStringFromWasm0(ptr2, len2);
-        } finally {
-            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
-        }
-    };
-
-    /**
-     * Decode a CBOR entry to JSON (CIDs as hex).
-     * @param {Uint8Array} bytes
-     * @returns {string}
-     */
-    __exports.decode_entry = function(bytes) {
-        let deferred3_0;
-        let deferred3_1;
-        try {
-            const ptr0 = passArray8ToWasm0(bytes, wasm.__wbindgen_malloc);
-            const len0 = WASM_VECTOR_LEN;
-            const ret = wasm.decode_entry(ptr0, len0);
-            var ptr2 = ret[0];
-            var len2 = ret[1];
-            if (ret[3]) {
-                ptr2 = 0; len2 = 0;
-                throw takeFromExternrefTable0(ret[2]);
-            }
-            deferred3_0 = ptr2;
-            deferred3_1 = len2;
-            return getStringFromWasm0(ptr2, len2);
-        } finally {
-            wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
         }
     };
 
