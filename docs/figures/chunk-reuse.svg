@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 280" role="img" aria-labelledby="title desc">
+  <title id="title">Content-defined chunks store only what changed</title>
+  <desc id="desc">Two revisions of a 50 MB model. Shared FastCDC chunks are drawn in one colour; the two new chunks from a 2 MB append are drawn in another. A subtree pin retains the whole file from the manifest CID.</desc>
+  <style>
+    .paper { fill: #e8f0ea; }
+    .ink { fill: #1a2e28; }
+    .muted { fill: #4a6358; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .sans { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .shared { fill: #5a8f7a; }
+    .fresh { fill: #3d6a7a; }
+    .manifest { fill: #f7fbf8; stroke: #c5d4ca; }
+    @media (prefers-color-scheme: dark) {
+      .paper { fill: #121a17; }
+      .ink { fill: #dce8e1; }
+      .muted { fill: #8aa396; }
+      .shared { fill: #4e9a7e; }
+      .fresh { fill: #5a9bb0; }
+      .manifest { fill: #1a2420; stroke: #3a4a42; }
+    }
+  </style>
+  <rect class="paper" width="760" height="280"/>
+  <text class="sans muted" x="24" y="28" font-size="11" letter-spacing="0.12em">CHUNKING FOLLOWS CONTENT</text>
+  <text class="sans ink" x="24" y="50" font-size="16" font-weight="600">Append 2 MB to a 50 MB model; store ~2 MB</text>
+  <text class="sans muted" x="24" y="70" font-size="12">Boundaries come from the bytes (FastCDC), not from offset 0. Unchanged regions keep their CIDs.</text>
+
+  <text class="sans muted" x="24" y="104" font-size="11">v1  ·  file/v1 manifest</text>
+  <g transform="translate(24,114)">
+    <rect class="shared" x="0" y="0" width="88" height="28" rx="3"/>
+    <rect class="shared" x="92" y="0" width="72" height="28" rx="3"/>
+    <rect class="shared" x="168" y="0" width="96" height="28" rx="3"/>
+    <rect class="shared" x="268" y="0" width="64" height="28" rx="3"/>
+    <rect class="shared" x="336" y="0" width="80" height="28" rx="3"/>
+    <rect class="shared" x="420" y="0" width="108" height="28" rx="3"/>
+    <rect class="shared" x="532" y="0" width="70" height="28" rx="3"/>
+    <rect class="manifest" x="612" y="0" width="124" height="28" rx="3"/>
+    <text class="mono ink" x="624" y="19" font-size="10">manifest CID</text>
+  </g>
+
+  <text class="sans muted" x="24" y="168" font-size="11">v2  ·  same file, 2 MB appended</text>
+  <g transform="translate(24,178)">
+    <rect class="shared" x="0" y="0" width="88" height="28" rx="3"/>
+    <rect class="shared" x="92" y="0" width="72" height="28" rx="3"/>
+    <rect class="shared" x="168" y="0" width="96" height="28" rx="3"/>
+    <rect class="shared" x="268" y="0" width="64" height="28" rx="3"/>
+    <rect class="shared" x="336" y="0" width="80" height="28" rx="3"/>
+    <rect class="shared" x="420" y="0" width="108" height="28" rx="3"/>
+    <rect class="shared" x="532" y="0" width="70" height="28" rx="3"/>
+    <rect class="fresh" x="606" y="0" width="52" height="28" rx="3"/>
+    <rect class="fresh" x="662" y="0" width="74" height="28" rx="3"/>
+  </g>
+  <text class="sans muted" x="606" y="224" font-size="11">new chunks only</text>
+
+  <g transform="translate(24,240)">
+    <rect class="shared" width="16" height="12" rx="2"/>
+    <text class="sans muted" x="22" y="11" font-size="11">already stored (identical CID)</text>
+    <rect class="fresh" x="220" width="16" height="12" rx="2"/>
+    <text class="sans muted" x="242" y="11" font-size="11">written this put</text>
+    <text class="sans ink" x="400" y="11" font-size="11">pin the manifest with :full — the parts stay too</text>
+  </g>
+</svg>

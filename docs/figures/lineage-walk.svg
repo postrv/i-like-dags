@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 340" role="img" aria-labelledby="title desc">
+  <title id="title">A release is a walkable graph of immutable links</title>
+  <desc id="desc">A production pointer names a release entry. That entry links a dataset card, a config, and code. The dataset card links the CSV. Verification re-hashes every node on the walk.</desc>
+  <style>
+    .paper { fill: #e8f0ea; }
+    .ink { fill: #1a2e28; }
+    .muted { fill: #4a6358; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .sans { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .twine { stroke: #3d6b5a; stroke-width: 1.6; fill: none; }
+    .card { fill: #f7fbf8; stroke: #c5d4ca; stroke-width: 1; }
+    .kind { fill: #3d6b5a; }
+    .brass { fill: #b08d3e; }
+    .check { fill: #2b6b4f; }
+    @media (prefers-color-scheme: dark) {
+      .paper { fill: #121a17; }
+      .ink { fill: #dce8e1; }
+      .muted { fill: #8aa396; }
+      .twine { stroke: #6aa58a; }
+      .card { fill: #1a2420; stroke: #3a4a42; }
+      .kind { fill: #8fc9ae; }
+    }
+  </style>
+  <rect class="paper" width="760" height="340"/>
+  <text class="sans muted" x="24" y="28" font-size="11" letter-spacing="0.12em">LINEAGE IS A GRAPH</text>
+  <text class="sans ink" x="24" y="50" font-size="16" font-weight="600">“What produced production?” is a walk, not a JOIN</text>
+  <text class="sans muted" x="24" y="70" font-size="12">Each box is an immutable entry. Arrows are named links, covered by the parent’s CID.</text>
+
+  <!-- pointer tag -->
+  <rect x="24" y="92" width="168" height="44" rx="4" fill="#1a2e28"/>
+  <text class="sans" x="36" y="110" font-size="10" fill="#cfe0d6">POINTER</text>
+  <text class="mono" x="36" y="126" font-size="11" fill="#f7fbf8">models/…/production</text>
+
+  <path class="twine" d="M192 114 H236" marker-end="url(#arr)"/>
+
+  <!-- release -->
+  <g transform="translate(236,88)">
+    <rect class="card" width="220" height="72" rx="8"/>
+    <circle class="brass" cx="14" cy="14" r="4"/>
+    <text class="sans kind" x="28" y="18" font-size="10">RELEASE  ·  c73d19ee</text>
+    <text class="sans ink" x="16" y="40" font-size="13" font-weight="600">attest-release output</text>
+    <text class="sans muted" x="16" y="58" font-size="11">links: dataset, config, code</text>
+  </g>
+
+  <!-- three children -->
+  <path class="twine" d="M346 160 V180 H120 V200" marker-end="url(#arr)"/>
+  <path class="twine" d="M346 160 V180 H346 V200" marker-end="url(#arr)"/>
+  <path class="twine" d="M346 160 V180 H572 V200" marker-end="url(#arr)"/>
+
+  <g transform="translate(24,200)">
+    <rect class="card" width="192" height="64" rx="8"/>
+    <text class="sans kind" x="12" y="18" font-size="10">DATASET  ·  a8fce5a8</text>
+    <text class="sans ink" x="12" y="38" font-size="12" font-weight="600">customer-transactions</text>
+    <text class="sans muted" x="12" y="54" font-size="11">link: rows.csv</text>
+  </g>
+  <g transform="translate(250,200)">
+    <rect class="card" width="192" height="64" rx="8"/>
+    <text class="sans kind" x="12" y="18" font-size="10">CONFIG  ·  af7d3032</text>
+    <text class="sans ink" x="12" y="38" font-size="12" font-weight="600">fraud-detector.yaml</text>
+    <text class="sans muted" x="12" y="54" font-size="11">thresholds, features</text>
+  </g>
+  <g transform="translate(476,200)">
+    <rect class="card" width="192" height="64" rx="8"/>
+    <text class="sans kind" x="12" y="18" font-size="10">CODE  ·  40fde5be</text>
+    <text class="sans ink" x="12" y="38" font-size="12" font-weight="600">trainer.py</text>
+    <text class="sans muted" x="12" y="54" font-size="11">the program that ran</text>
+  </g>
+
+  <path class="twine" d="M120 264 V284" marker-end="url(#arr)"/>
+  <g transform="translate(24,284)">
+    <rect class="card" width="192" height="40" rx="8"/>
+    <text class="mono ink" x="12" y="25" font-size="11">6e23af8c…  rows.csv</text>
+  </g>
+
+  <text class="sans check" x="250" y="312" font-size="12">dag usecase verify  →  7 of 7 nodes intact, re-hashed</text>
+
+  <defs>
+    <marker id="arr" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+      <path d="M0,0 L7,3.5 L0,7 z" fill="#3d6b5a"/>
+    </marker>
+  </defs>
+</svg>

@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" role="img" aria-labelledby="title desc">
+  <title id="title">A filesystem path can be overwritten; a CID cannot</title>
+  <desc id="desc">Two panels. Left: the same path models/fraud.bin still names new bytes after an overwrite. Right: changing a byte mints a new CID; the old CID still names the old bytes.</desc>
+  <style>
+    .paper { fill: #e8f0ea; }
+    .panel { fill: #f7fbf8; stroke: #c5d4ca; stroke-width: 1; }
+    .ink { fill: #1a2e28; }
+    .muted { fill: #4a6358; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .sans { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .pathbox { fill: #f4efe4; stroke: #b9a57a; stroke-width: 1.25; }
+    .cidbox { fill: #dceee3; stroke: #3d6b5a; stroke-width: 1.25; }
+    .cidbox-old { fill: #dceee3; stroke: #3d6b5a; stroke-width: 1.25; }
+    .cidbox-new { fill: #d7e4ea; stroke: #3d6a7a; stroke-width: 1.25; }
+    .warn { fill: #9b3d4a; }
+    .ok { fill: #2b6b4f; }
+    .strike { stroke: #9b3d4a; stroke-width: 1.5; }
+    @media (prefers-color-scheme: dark) {
+      .paper { fill: #121a17; }
+      .panel { fill: #1a2420; stroke: #3a4a42; }
+      .ink { fill: #dce8e1; }
+      .muted { fill: #8aa396; }
+      .pathbox { fill: #2a261c; stroke: #8a7a52; }
+      .cidbox, .cidbox-old { fill: #1e3229; stroke: #6aa58a; }
+      .cidbox-new { fill: #1d2e35; stroke: #6a9aab; }
+    }
+  </style>
+  <rect class="paper" width="760" height="300"/>
+
+  <!-- Left: path -->
+  <rect class="panel" x="16" y="16" width="356" height="268" rx="10"/>
+  <text class="sans muted" x="36" y="42" font-size="11" letter-spacing="0.12em">A PATH</text>
+  <text class="sans ink" x="36" y="64" font-size="15" font-weight="600">Same name, new bytes</text>
+
+  <rect class="pathbox" x="36" y="82" width="316" height="52" rx="6"/>
+  <text class="mono ink" x="52" y="104" font-size="12">models/fraud.bin</text>
+  <text class="sans muted" x="52" y="122" font-size="11">bytes:  …Q1 training rows…</text>
+
+  <path class="strike" d="M194 146 v28" marker-end="url(#arrow-warn)"/>
+  <text class="sans warn" x="208" y="166" font-size="11">overwrite in place</text>
+
+  <rect class="pathbox" x="36" y="184" width="316" height="52" rx="6"/>
+  <text class="mono ink" x="52" y="206" font-size="12">models/fraud.bin</text>
+  <text class="sans muted" x="52" y="224" font-size="11">bytes:  …Q2 training rows…</text>
+  <text class="sans warn" x="36" y="262" font-size="11">The path still resolves. Nothing records that it changed.</text>
+
+  <!-- Right: CID -->
+  <rect class="panel" x="388" y="16" width="356" height="268" rx="10"/>
+  <text class="sans muted" x="408" y="42" font-size="11" letter-spacing="0.12em">A CID</text>
+  <text class="sans ink" x="408" y="64" font-size="15" font-weight="600">The name is the hash</text>
+
+  <rect class="cidbox-old" x="408" y="82" width="316" height="52" rx="6"/>
+  <text class="mono ink" x="424" y="104" font-size="12">c73d19ee…3b6f</text>
+  <text class="sans muted" x="424" y="122" font-size="11">SHA-256(Q1 bytes) — still retrievable</text>
+
+  <path d="M566 146 v28" stroke="#3d6a7a" stroke-width="1.5" fill="none" marker-end="url(#arrow-ok)"/>
+  <text class="sans ok" x="408" y="166" font-size="11">put the new bytes → a new address</text>
+
+  <rect class="cidbox-new" x="408" y="184" width="316" height="52" rx="6"/>
+  <text class="mono ink" x="424" y="206" font-size="12">a8fce5a8…64ce</text>
+  <text class="sans muted" x="424" y="224" font-size="11">SHA-256(Q2 bytes) — old CID is unaffected</text>
+  <text class="sans ok" x="408" y="262" font-size="11">Anyone holding the bytes can re-hash them. No account required.</text>
+
+  <defs>
+    <marker id="arrow-warn" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#9b3d4a"/>
+    </marker>
+    <marker id="arrow-ok" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#3d6a7a"/>
+    </marker>
+  </defs>
+</svg>

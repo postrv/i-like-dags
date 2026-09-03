@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" role="img" aria-labelledby="title desc">
+  <title id="title">Pointers name a moving head; pins retain a subtree</title>
+  <desc id="desc">An append-only pointer log for models/production with seq 1, 2 and 3. The hanging label sits on seq 3. A brass pin through the current release retains the whole linked subtree so garbage collection cannot take it.</desc>
+  <style>
+    .paper { fill: #e8f0ea; }
+    .ink { fill: #1a2e28; }
+    .muted { fill: #4a6358; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .sans { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .spine { stroke: #3d6b5a; stroke-width: 2; fill: none; }
+    .event { fill: #f7fbf8; stroke: #c5d4ca; }
+    .head { fill: #1a2e28; }
+    .pin { fill: #b08d3e; }
+    .retain { fill: #dceee3; stroke: #3d6b5a; }
+    @media (prefers-color-scheme: dark) {
+      .paper { fill: #121a17; }
+      .ink { fill: #dce8e1; }
+      .muted { fill: #8aa396; }
+      .spine { stroke: #6aa58a; }
+      .event { fill: #1a2420; stroke: #3a4a42; }
+      .head { fill: #dce8e1; }
+      .retain { fill: #1e3229; stroke: #6aa58a; }
+    }
+  </style>
+  <rect class="paper" width="760" height="300"/>
+  <text class="sans muted" x="24" y="28" font-size="11" letter-spacing="0.12em">NAMES MOVE. BYTES DO NOT.</text>
+  <text class="sans ink" x="24" y="50" font-size="16" font-weight="600">A pointer is a hanging label. A pin is a brass tack.</text>
+
+  <!-- log spine -->
+  <path class="spine" d="M80 80 V250"/>
+  <circle cx="80" cy="100" r="6" fill="#3d6b5a"/>
+  <circle cx="80" cy="160" r="6" fill="#3d6b5a"/>
+  <circle cx="80" cy="220" r="7" fill="#1a2e28"/>
+
+  <g transform="translate(100,82)">
+    <rect class="event" width="220" height="36" rx="6"/>
+    <text class="mono ink" x="12" y="16" font-size="11">seq 1  create</text>
+    <text class="sans muted" x="12" y="30" font-size="10">→  b15d8321…  (March)</text>
+  </g>
+  <g transform="translate(100,142)">
+    <rect class="event" width="220" height="36" rx="6"/>
+    <text class="mono ink" x="12" y="16" font-size="11">seq 2  update</text>
+    <text class="sans muted" x="12" y="30" font-size="10">→  88ab0377…  (June)</text>
+  </g>
+  <g transform="translate(100,202)">
+    <rect class="head" width="220" height="36" rx="6"/>
+    <text class="mono" x="12" y="16" font-size="11" fill="#f7fbf8">seq 3  update  ·  HEAD</text>
+    <text class="sans" x="12" y="30" font-size="10" fill="#cfe0d6">→  c73d19ee…  (today)</text>
+  </g>
+
+  <!-- hanging label -->
+  <path d="M320 220 H380" stroke="#1a2e28" stroke-width="1.25" fill="none"/>
+  <polygon points="380,208 520,208 520,248 380,248 372,228" fill="#1a2e28"/>
+  <text class="sans" x="392" y="226" font-size="10" fill="#cfe0d6">POINTER</text>
+  <text class="mono" x="392" y="242" font-size="11" fill="#f7fbf8">models/production</text>
+
+  <!-- pin -->
+  <g transform="translate(548,88)">
+    <rect class="retain" width="188" height="168" rx="10"/>
+    <circle class="pin" cx="94" cy="18" r="8"/>
+    <rect class="pin" x="91" y="18" width="6" height="22"/>
+    <text class="sans ink" x="16" y="56" font-size="12" font-weight="600">subtree pin</text>
+    <text class="sans muted" x="16" y="76" font-size="11">target c73d19ee:full</text>
+    <text class="sans muted" x="16" y="96" font-size="11">walks every link</text>
+    <text class="sans muted" x="16" y="116" font-size="11">GC cannot collect</text>
+    <text class="sans muted" x="16" y="136" font-size="11">the release or its parts</text>
+    <text class="sans ink" x="16" y="158" font-size="11">history stays in the log</text>
+  </g>
+</svg>

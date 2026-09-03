@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 220" role="img" aria-labelledby="title desc">
+  <title id="title">A flipped bit fails verification at the CID that named it</title>
+  <desc id="desc">A dataset card still hashes. One of its linked CSV chunks does not. Verification names the missing part, not the root, and exits 65.</desc>
+  <style>
+    .paper { fill: #e8f0ea; }
+    .ink { fill: #1a2e28; }
+    .muted { fill: #4a6358; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .sans { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    .ok { fill: #2b6b4f; }
+    .bad { fill: #9b3d4a; }
+    .card { fill: #f7fbf8; stroke: #c5d4ca; }
+    .card-bad { fill: #f8ecec; stroke: #c48a90; }
+    .twine { stroke: #3d6b5a; stroke-width: 1.5; fill: none; }
+    .twine-bad { stroke: #9b3d4a; stroke-width: 1.5; fill: none; stroke-dasharray: 4 3; }
+    @media (prefers-color-scheme: dark) {
+      .paper { fill: #121a17; }
+      .ink { fill: #dce8e1; }
+      .muted { fill: #8aa396; }
+      .card { fill: #1a2420; stroke: #3a4a42; }
+      .card-bad { fill: #2a1c1e; stroke: #a56a70; }
+      .twine { stroke: #6aa58a; }
+    }
+  </style>
+  <rect class="paper" width="760" height="220"/>
+  <text class="sans muted" x="24" y="28" font-size="11" letter-spacing="0.12em">TAMPER IS A FAILED HASH</text>
+  <text class="sans ink" x="24" y="50" font-size="16" font-weight="600">The root can still hash. The part that moved does not.</text>
+
+  <g transform="translate(24,72)">
+    <rect class="card" width="200" height="56" rx="8"/>
+    <text class="sans ok" x="12" y="22" font-size="11">✓  root still hashes</text>
+    <text class="mono ink" x="12" y="42" font-size="11">c73d19ee…3b6f</text>
+  </g>
+  <path class="twine" d="M224 100 H280" marker-end="url(#okarr)"/>
+  <g transform="translate(280,72)">
+    <rect class="card" width="200" height="56" rx="8"/>
+    <text class="sans ok" x="12" y="22" font-size="11">✓  list of parts intact</text>
+    <text class="mono ink" x="12" y="42" font-size="11">file/v1  ·  8 links</text>
+  </g>
+  <path class="twine-bad" d="M480 100 H536" marker-end="url(#badarr)"/>
+  <g transform="translate(536,72)">
+    <rect class="card-bad" width="200" height="56" rx="8"/>
+    <text class="sans bad" x="12" y="22" font-size="11">✗  chunk not found</text>
+    <text class="mono ink" x="12" y="42" font-size="11">220de7cb…  (part 4)</text>
+  </g>
+
+  <rect x="24" y="152" width="712" height="48" rx="8" fill="#1a2e28"/>
+  <text class="mono" x="40" y="172" font-size="12" fill="#f7fbf8">$ dag verify --cid c73d19ee…</text>
+  <text class="mono" x="40" y="190" font-size="12" fill="#e8b4b8">content is not intact: Chunk not found: 220de7cb…    exit 65</text>
+
+  <defs>
+    <marker id="okarr" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+      <path d="M0,0 L7,3.5 L0,7 z" fill="#3d6b5a"/>
+    </marker>
+    <marker id="badarr" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+      <path d="M0,0 L7,3.5 L0,7 z" fill="#9b3d4a"/>
+    </marker>
+  </defs>
+</svg>
