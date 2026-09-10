@@ -73,7 +73,7 @@ hex = "0.4"
 # Control-plane storage engine. See docs/decisions/adr-001-storage-engine.md.
 redb = "4.1"
 # Content-defined chunking for files larger than one chunk.
-fastcdc = "4.0"
+fastcdc = "5.0"
 # Signing layer: Ed25519 over DSSE envelopes (ADR-002 candidate).
 ed25519-dalek = "3.0"
 base64 = "0.22"
